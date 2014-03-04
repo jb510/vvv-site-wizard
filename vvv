@@ -144,7 +144,7 @@ if [[ $action = 'new' || $action = 'make' || $action = 'create' ]]; then
 		unset site
 	fi
 	while [ -z $site ]; do
-		echo -n "Name of new site directory: "
+		echo -n "Name of new site (directory): "
 		read site
 
 		if [ -z $site ]; then
@@ -156,7 +156,11 @@ if [[ $action = 'new' || $action = 'make' || $action = 'create' ]]; then
 	done
 
 	# Get database name
-	db_name=$site
+	echo -n "Database name (leave blank for $site ): "
+	read db_name
+	if [ -z $db_name ]; then
+		db_name=$site
+	fi
 
 	# Get local URL
 	echo -n "Domain to use (leave blank for $site.dev): "
@@ -164,6 +168,14 @@ if [[ $action = 'new' || $action = 'make' || $action = 'create' ]]; then
 	if [ -z $domain ]; then
 		domain="$site.dev"
 	fi
+
+	# Get starter install Directory
+	echo -n "Directory to clone (leave blank for /9s-wp-starter): "
+	read sourcedir
+	if [ -z $sourcedir ]; then
+		sourcedir="9s-wp-starter"
+	fi
+
 
 	# Inform the user of what's about to happen and give them a chance to back out
 	# =============================================================================
@@ -195,21 +207,33 @@ if [[ $action = 'new' || $action = 'make' || $action = 'create' ]]; then
 	# =============================================================================
 	cd $path/www
 	echo -en "Creating site directory and vvv-init.sh file... "
-	mkdir $site; cd $site
 
-	printf "echo \"Creating database $site (if it does not exist)...\"\n"\
+	printf "echo \"Creating database $db_name (if it does not exist)...\"\n"\
 "mysql -u root --password=root -e \"CREATE DATABASE IF NOT EXISTS \\\`$db_name\\\`\"\n"\
-"mysql -u root --password=root -e \"GRANT ALL PRIVILEGES ON \\\`$db_name\\\`.* TO wp@localhost IDENTIFIED BY 'wp';\"\n"\
-"if [ ! -d \"htdocs\" ]; then\n"\
-"\techo 'Checking out WordPress trunk in $site/htdocs...'\n"\
-"\tsvn checkout http://svn.automattic.com/wordpress/trunk/ htdocs\n"\
-"\tcd htdocs\n"\
-"\twp core config --dbname=\"$db_name\" --dbuser=wp --dbpass=wp --dbhost=\"localhost\" --allow-root\n"\
-"\twp core install --url=$domain --title=\"$site - WordPress Trunk\" --admin_user=admin --admin_password=password --admin_email=demo@example.com --allow-root\n"\
+"mysql -u root --password=root -e \"GRANT ALL PRIVILEGES ON \\\`$db_name\\\`.* TO root@localhost IDENTIFIED BY 'root';\"\n"\
+"if [ ! -d \"$site\" ]; then\n"\
+"\tmkdir \"$site\"\n"\
+"\tif [ \"$sourcedir\" == \"9s-wp-starter\" ]; then\n"\
+"\t\techo 'Copying \"$sourcedir/\"'\n"\
+"\t\trsync -av --progress \"$sourcedir/\" \"$site/\" --exclude '.git' --exclude '9s-wp-starter.sublime-workspace'\n"\
+"\tfi\n"\
+"\tcd \"$site\"\n"\
+"\tif [ -f \"$sourcedir.sublime-project\" ]; then\n"\
+"\t\tmv \"$sourcedir.sublime-project\" \"$site.sublime-project\"\n"\
+"\tfi\n"\
+"\tif [ -f \"wp-config-local.php\" ]; then\n"\
+"\t\tsed \"s/'9s_wp_starter'/'$db_name'/\" wp-config-local.php\n"\
+"\t\tsed \"s/lcl.9s-wp-starter.dev/$domain/\" wp-config-local.php\n"\
+"\tfi\n"\
+"#TODO fix wp core config/install for wp-config-local.php\n"\
+"\twp core config --dbname=\"$db_name\" --dbuser=root --dbpass=root --dbhost=\"localhost\" --allow-root\n"\
+"\twp core install --url=$domain --title=\"$site\" --admin_user=admin --admin_password=password --admin_email=demo@example.com --allow-root\n"\
+"#TODO init git, add remotes, add to git tower\n"\
 "\tcd ..\n"\
 "else\n"\
-"\techo 'Updating WordPress trunk in $site/htdocs...'\n"\
-"\tsvn up htdocs\n"\
+"\tcd \"$site\"\n"\
+"\techo 'Updating WordPress in $site...'\n"\
+"\twp core update\n"\
 "fi\n" > vvv-init.sh
 
 	done_text
@@ -227,7 +251,7 @@ if [[ $action = 'new' || $action = 'make' || $action = 'create' ]]; then
 	cd $path/config/nginx-config/sites
 	echo -en "Creating nginx-config/sites/$site.conf... "
 	sed -e "s/testserver\.com/$domain/" \
-		-e "s/wordpress-local/$site\/htdocs/" local-nginx-example.conf-sample > $site.conf
+		-e "s/wordpress-local/$site/" local-nginx-example.conf-sample > $site.conf
 	done_text
 
 	# vagrant waaaaay up
