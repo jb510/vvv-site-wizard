@@ -170,7 +170,7 @@ if [[ $action = 'new' || $action = 'make' || $action = 'create' ]]; then
 	fi
 
 	# Get starter install Directory
-	echo -n "Directory to clone (leave blank for /9s-wp-starter): "
+	echo -n "Use path to Directory to clone (leave BLANK for /9s-wp-starter, type 'WPCLI' for wp-cli install, or type path): "
 	read sourcedir
 	if [ -z $sourcedir ]; then
 		sourcedir="9s-wp-starter"
@@ -212,27 +212,23 @@ if [[ $action = 'new' || $action = 'make' || $action = 'create' ]]; then
 	printf "echo \"Creating database $db_name (if it does not exist)...\"\n"\
 "mysql -u root --password=root -e \"CREATE DATABASE IF NOT EXISTS \\\`$db_name\\\`\"\n"\
 "mysql -u root --password=root -e \"GRANT ALL PRIVILEGES ON \\\`$db_name\\\`.* TO root@localhost IDENTIFIED BY 'root';\"\n"\
-"if [ ! -f \"$site\/wp-config.php\" ]; then\n"\
+"cd \"$path/www/$site\"\n"\
+"echo 'Current Directory: '\n"\
+"pwd\n"\
+"if [ ! -f /wp-config.php ]; then\n"\
 "\tif [ \"$sourcedir\" == \"9s-wp-starter\" ]; then\n"\
 "\t\techo 'Copying \"$sourcedir/\"'\n"\
-"\t\trsync -a --progress \"../$sourcedir/\" \"\" --exclude '.git' --exclude '9s-wp-starter.sublime-workspace' --exclude 'wp-config-local-sample.php'\n"\
-"\tfi\n"\
-"\tif [ -f \"$sourcedir.sublime-project\" ]; then\n"\
+"\t\trsync -a \"../$sourcedir/\" \"\" --exclude '.git' --exclude '9s-wp-starter.sublime-workspace' --exclude 'wp-config-local*.php'\n"\
 "\t\techo 'Rename \"$sourcedir.sublime-project\" to \"$site.sublime-project\"'\n"\
 "\t\tmv \"$sourcedir.sublime-project\" \"$site.sublime-project\"\n"\
-"\tfi\n"\
-"\tif [ -f \"wp-config-local.php\" ]; then\n"\
 "\t\techo 'Setting DB and Domain in wp-config-local.php'\n"\
-"\t\tsed \"s/9s_wp_starter/$db_name/\" wp-config-local.php\n"\
-"\t\tsed \"s/lcl.9s-wp-starter.dev/$domain/\" wp-config-local.php\n"\
+"\t\tsed 's/local_db/$db_name/;s/local_domain/$domain/' '../$sourcedir/wp-config-local-sample.php' > wp-config-local.php;\n"\
+"\t\t#TODO init git, add remotes, add to git tower\n"\
+"\telif [ \"$sourcedir\" == \"WPCLI\" ]; then\n"\
+"\t\twp core config --dbname=\"$db_name\" --dbuser=root --dbpass=root --dbhost=\"localhost\" --allow-root\n"\
+"\t\twp core install --url=$domain --title=\"$site\" --admin_user=admin --admin_password=password --admin_email=demo@example.com --allow-root\n"\
 "\tfi\n"\
-"#TODO fix wp core config/install for wp-config-local.php\n"\
-"\twp core config --dbname=\"$db_name\" --dbuser=root --dbpass=root --dbhost=\"localhost\" --allow-root\n"\
-"\twp core install --url=$domain --title=\"$site\" --admin_user=admin --admin_password=password --admin_email=demo@example.com --allow-root\n"\
-"#TODO init git, add remotes, add to git tower\n"\
-"\tcd ..\n"\
 "else\n"\
-"\tcd \"$site\"\n"\
 "\techo 'Updating WordPress in $site...'\n"\
 "\twp core update\n"\
 "fi\n" > "$site/vvv-init.sh"
