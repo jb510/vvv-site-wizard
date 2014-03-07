@@ -215,16 +215,18 @@ if [[ $action = 'new' || $action = 'make' || $action = 'create' ]]; then
 "cd \"$path/www/$site\"\n"\
 "echo 'Current Directory: '\n"\
 "pwd\n"\
-"if [ ! -f /wp-config.php ]; then\n"\
+"if [ ! -f wp-config.php ]; then\n"\
+"\techo 'wp-config.php not found'\n"\
 "\tif [ \"$sourcedir\" == \"9s-wp-starter\" ]; then\n"\
 "\t\techo 'Copying \"$sourcedir/\"'\n"\
-"\t\trsync -a \"../$sourcedir/\" \"\" --exclude '.git' --exclude '9s-wp-starter.sublime-workspace' --exclude 'wp-config-local*.php'\n"\
-"\t\techo 'Rename \"$sourcedir.sublime-project\" to \"$site.sublime-project\"'\n"\
-"\t\tmv \"$sourcedir.sublime-project\" \"$site.sublime-project\"\n"\
+"\t\trsync -a \"../$sourcedir/\" \"\" --exclude '.git' --exclude '9s-wp-starter.sublime*' --exclude 'wp-config-local*.php' --exclude 'vvv*'\n"\
+"\t\techo 'Copying \"$sourcedir.sublime-project\" to \"$site.sublime-project\"'\n"\
+"\t\tsed 's/lcl.9s-wp-starter.com/$domain/' '../$sourcedir/9s-wp-starter.sublime-project' > \"$site.sublime-project\"\n"\
 "\t\techo 'Setting DB and Domain in wp-config-local.php'\n"\
 "\t\tsed 's/local_db/$db_name/;s/local_domain/$domain/' '../$sourcedir/wp-config-local-sample.php' > wp-config-local.php;\n"\
 "\t\t#TODO init git, add remotes, add to git tower\n"\
 "\telif [ \"$sourcedir\" == \"WPCLI\" ]; then\n"\
+"\techo 'Installing WP from WPCLI'\n"\
 "\t\twp core config --dbname=\"$db_name\" --dbuser=root --dbpass=root --dbhost=\"localhost\" --allow-root\n"\
 "\t\twp core install --url=$domain --title=\"$site\" --admin_user=admin --admin_password=password --admin_email=demo@example.com --allow-root\n"\
 "\tfi\n"\
