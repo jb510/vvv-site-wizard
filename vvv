@@ -233,6 +233,7 @@ if [[ $action = 'new' || $action = 'make' || $action = 'create' ]]; then
 "\telse\n"\
 "\t\techo 'Updating WordPress in $site...'\n"\
 "\t\twp core update --allow-root\n"\
+"\tfi\n"\
 "else\n"\
 "\techo 'WHOA! What are we doing here.'\n"\
 "fi\n" > "$site/vvv-init.sh"
