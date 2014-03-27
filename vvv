@@ -219,11 +219,13 @@ if [[ $action = 'new' || $action = 'make' || $action = 'create' ]]; then
 "\t\techo 'wp-config.php not found'\n"\
 "\t\tif [ \"$sourcedir\" == \"9s-wp-starter\" ]; then\n"\
 "\t\t\techo 'Copying \"$sourcedir/\"'\n"\
-"\t\t\trsync -a \"../$sourcedir/\" \"\" --exclude '.git' --exclude '9s-wp-starter.sublime*' --exclude 'wp-config-local*.php' --exclude 'vvv*'\n"\
+"\t\t\trsync -a \"../$sourcedir/\" \"\" --exclude '.git' --exclude '9s-wp-starter.sublime*' --exclude 'wp-config-local*.php' --exclude 'vvv*' --exclude '.htaccess*'\n"\
 "\t\t\techo 'Copying \"$sourcedir.sublime-project\" to \"$site.sublime-project\"'\n"\
 "\t\t\tsed 's/lcl.9s-wp-starter.com/$domain/' '../$sourcedir/9s-wp-starter.sublime-project' > \"$site.sublime-project\"\n"\
 "\t\t\techo 'Setting DB and Domain in wp-config-local.php'\n"\
 "\t\t\tsed 's/local_db/$db_name/;s/local_domain/$domain/' '../$sourcedir/wp-config-local-sample.php' > wp-config-local.php;\n"\
+"\t\t\techo 'Copying htaccess and replacing htpasswd path settings'\n"\
+"\t\t\tsed 's/remote_path/$site/' '../$sourcedir/.htaccess-sample' > .htaccess;\n"\
 "\t\t\t#TODO init git, add remotes, add to git tower\n"\
 "\t\telif [ \"$sourcedir\" == \"WPCLI\" ]; then\n"\
 "\t\techo 'Installing WP from WPCLI'\n"\
